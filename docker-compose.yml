@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:10
+    environment:
+      - POSTGRES_PASSWORD=penguin
+  redis:
+    image: redis:4
+  nginx: # Needed to route requests to applicable react/express server.
+    restart: always # Always restart container if it dies--otherwise site can't be accessed.
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - 3050:80
+    depends_on: # Requires that api and client containers start before nginx container. Does not make sure containers are fully ready but are STARTED in the correct order.
+      - api
+      - client
+  api:
+    build:
+      dockerfile: Dockerfile.dev  # Do not have to specify location, just file name. Context specifies location.
+      context: ./server   # Tells us where to find the Dockerfile.
+    volumes:
+      - /app/node_modules # Do NOT override this folder (normal volume).
+      - ./server:/app # Bind mounts everything inside server directory to container's app directory.
+    environment: # Keys found in server/keys.js.
+      - REDIS_HOST=redis # References the redis service in the compose file.
+      - REDIS_PORT=6379 # From redis documentation.
+      - PGUSER=postgres # From postgres documentation.
+      - PGHOST=postgres # References postgres service in compose file.
+      - PGDATABASE=postgres # From postgres documentation.
+      - PGPASSWORD=penguin # References postgres environment password in compose file.
+      - PGPORT=5432 # From postgres documentation.
+  client:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+    environment:
+      - WDS_SOCKET_PORT=0
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+
+
+
+
