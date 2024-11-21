@@ -1,27 +1,14 @@
 services:
-  postgres:
-    image: postgres:10
-    environment:
-      - POSTGRES_PASSWORD=penguin
-  redis:
-    image: redis:4
-  nginx: # Needed to route requests to applicable react/express server.
-    restart: always # Always restart container if it dies--otherwise site can't be accessed.
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./nginx
+  nginx:
+    image: "{{ secrets.DOCKER_USERNAME }}/multi-nginx"
+    mem_limit: 128m
+    # Can omit hostname since nginx does not have a server in the ./nginx/default.conf
     ports:
-      - 3050:80
-    depends_on: # Requires that api and client containers start before nginx container. Does not make sure containers are fully ready but are STARTED in the correct order.
-      - api
-      - client
-  api:
-    build:
-      dockerfile: Dockerfile.dev  # Do not have to specify location, just file name. Context specifies location.
-      context: ./server   # Tells us where to find the Dockerfile.
-    volumes:
-      - /app/node_modules # Do NOT override this folder (normal volume).
-      - ./server:/app # Bind mounts everything inside server directory to container's app directory.
+      - "80:80"
+  server:
+    image: "{{ secrets.DOCKER_USERNAME }}/multi-server"
+    mem_limit: 128m
+    hostname: api # Comes from ./nginx/default.conf
     environment: # Keys found in server/keys.js.
       - REDIS_HOST=redis # References the redis service in the compose file.
       - REDIS_PORT=6379 # From redis documentation.
@@ -31,21 +18,13 @@ services:
       - PGPASSWORD=penguin # References postgres environment password in compose file.
       - PGPORT=5432 # From postgres documentation.
   client:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./client
-    volumes:
-      - /app/node_modules
-      - ./client:/app
-    environment:
-      - WDS_SOCKET_PORT=0
+    image: "{{ secrets.DOCKER_USERNAME }}/multi-client"
+    mem_limit: 128m
+    hostname: client # Comes from ./nginx/default.conf
   worker:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./worker
-    volumes:
-      - /app/node_modules
-      - ./worker:/app
+    image: "{{ secrets.DOCKER_USERNAME }}/multi-worker"
+    mem_limit: 128m
+    # Can omit hostname since nginx does not have a server in the ./nginx/default.conf
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
