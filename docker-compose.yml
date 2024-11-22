@@ -1,12 +1,12 @@
 services:
   nginx:
-    image: "{{ secrets.DOCKER_USERNAME }}/multi-nginx"
+    image: "$DOCKER_USERNAME/multi-nginx" # Docker username must be a secret stored on EB
     mem_limit: 128m
     # Can omit hostname since nginx does not have a server in the ./nginx/default.conf
     ports:
       - "80:80"
   server:
-    image: "{{ secrets.DOCKER_USERNAME }}/multi-server"
+    image: "$DOCKER_USERNAME/multi-server"
     mem_limit: 128m
     hostname: api # Comes from ./nginx/default.conf
     environment: # Keys found in server/keys.js.
@@ -18,11 +18,11 @@ services:
       - PGPASSWORD=$PGPASSWORD # References secret stored in Elastic Beanstalk
       - PGPORT=$PGPORT # References secret stored in Elastic Beanstalk
   client:
-    image: "{{ secrets.DOCKER_USERNAME }}/multi-client"
+    image: "$DOCKER_USERNAME/multi-client"
     mem_limit: 128m
     hostname: client # Comes from ./nginx/default.conf
   worker:
-    image: "{{ secrets.DOCKER_USERNAME }}/multi-worker"
+    image: "$DOCKER_USERNAME/multi-worker"
     mem_limit: 128m
     # Can omit hostname since nginx does not have a server in the ./nginx/default.conf
     environment:
