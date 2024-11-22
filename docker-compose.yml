@@ -10,13 +10,13 @@ services:
     mem_limit: 128m
     hostname: api # Comes from ./nginx/default.conf
     environment: # Keys found in server/keys.js.
-      - REDIS_HOST=redis # References the redis service in the compose file.
-      - REDIS_PORT=6379 # From redis documentation.
-      - PGUSER=postgres # From postgres documentation.
-      - PGHOST=postgres # References postgres service in compose file.
-      - PGDATABASE=postgres # From postgres documentation.
-      - PGPASSWORD=penguin # References postgres environment password in compose file.
-      - PGPORT=5432 # From postgres documentation.
+      - REDIS_HOST=$REDIS_HOST # References secret stored in Elastic Beanstalk EXCEPT port
+      - REDIS_PORT=$REDIS_PORT # References secret stored in Elastic Beanstalk
+      - PGUSER=$PGUSER # References secret stored in Elastic Beanstalk
+      - PGHOST=$PGHOST # References secret stored in Elastic Beanstalk EXCEPT port
+      - PGDATABASE=$PGDATABASE # References secret stored in Elastic Beanstalk
+      - PGPASSWORD=$PGPASSWORD # References secret stored in Elastic Beanstalk
+      - PGPORT=$PGPORT # References secret stored in Elastic Beanstalk
   client:
     image: "{{ secrets.DOCKER_USERNAME }}/multi-client"
     mem_limit: 128m
@@ -26,8 +26,8 @@ services:
     mem_limit: 128m
     # Can omit hostname since nginx does not have a server in the ./nginx/default.conf
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_HOST=$REDIS_HOST
+      - REDIS_PORT=$REDIS_PORT
 
 
 

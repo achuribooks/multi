@@ -1,18 +1,32 @@
-name: Deploy MultiDocker
+name: Deploy Frontend
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
-      - main # check your repo, your default branch might be master!
+      - main
 
 jobs:
-  build:
+  tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      - name: Build Docker image for testing.
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/multi -f Dockerfile.dev .
+      - name: Run Tests
+        run: docker run -e CI=true ${{ secrets.DOCKER_USERNAME }}/multi npm test
+
+  deploy:
+    if: github.event_name == 'push'  
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo ${{ secrets.DOCKER_PASSWORD }} | login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-      - run: docker build -t ${{ secrets.DOCKER_USERNAME }}/react-test -f ./client/Dockerfile.dev ./client
-      - run: docker run -e CI=true ${{ secrets.DOCKER_USERNAME }}/react-test npm test
-
+    
       - run: docker build -t ${{ secrets.DOCKER_USERNAME }}/multi-client ./client
       - run: docker build -t ${{ secrets.DOCKER_USERNAME }}/multi-nginx ./nginx
       - run: docker build -t ${{ secrets.DOCKER_USERNAME }}/multi-server ./server
@@ -22,3 +36,18 @@ jobs:
       - run: docker push ${{ secrets.DOCKER_USERNAME }}/multi-nginx
       - run: docker push ${{ secrets.DOCKER_USERNAME }}/multi-server
       - run: docker push ${{ secrets.DOCKER_USERNAME }}/multi-worker
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS }}
+          aws_secret_key: ${{ secrets.AWS_SECRET }}
+          application_name: multi-docker-amanda
+          environment_name: Multi-docker-amanda-env
+          existing_bucket_name: elasticbeanstalk-us-east-1-140023362796
+          region: us-east-1
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
+
