@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres
+  template:
+    metadata:
+      labels:
+        component: postgres
+    spec:
+      volumes:
+        - name: postgres-storage # Name of volume.
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim # Must match metadata.name of desired PVC config file.
+      containers:
+      - name: postgres
+        image: postgres
+        volumeMounts:
+          - name: postgres-storage # Has to match volumes.name.
+            mountPath: /var/lib/postgresql/data # Designates location in container that app is storing data at by default. Data here will be mapped to specified node (machine) location.
+            subPath: postgres # Specific to postgres; subdirectory of mountPath. Avoids conflicts if other containers share the same volume.
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-password
+                key: POSTGRES_PASSWORD

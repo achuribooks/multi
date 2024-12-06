@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-persistent-volume-claim
+# If we attach this claim to a pod, K8s must find (or create) a persistent volume that meets the below requirements.
+spec:
+  accessModes:
+    - ReadWriteOnce # The persistent volume we are asking for can be used by a single node for read-write purposes.
+    # Additional options are "ReadOnlyMany" (multiple nodes can read from the persistent volume) and "ReadWriteMany" (multiple nodes can read from and write to the persistent volume)
+  resources:
+    requests:
+      storage: 2Gi # States that we need exactly 2GB of storage.

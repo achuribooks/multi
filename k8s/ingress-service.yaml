@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  rules: # States there are two possible paths that traffic can go to.
+    - http:
+        paths:
+          - path: /?(.*) # Routes requests with "/" to client (react)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: client-cluster-ip-service # Metadata.name of applicable service to redirect properly.
+                port:
+                  number: 3000
+          - path: /api/?(.*) # Routes requests with "/api" to server (express)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: server-cluster-ip-service # Metadata.name of applicable service to redirect properly.
+                port:
+                  number: 5000

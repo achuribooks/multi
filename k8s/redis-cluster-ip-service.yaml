@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: redis # Using same selector as in redis-deployment to connect/group the client objects.
+  ports:
+  - port: 6379 # If other objects inside of cluster want to access this service, they use this port.
+    targetPort: 6379 # Route traffic to port 6379 of pods with same label/selector (component: redis). The pod is in turn listening on port 6379.
+    # No nodePort needed since you can't access it from outside the cluster anyway.

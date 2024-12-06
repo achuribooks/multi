@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: server # Using same selector as in server-deployment to connect/group the client objects.
+  ports:
+  - port: 5000 # If other objects inside of cluster want to access this service, they use this port.
+    targetPort: 5000 # Route traffic to port 5000 of pods with same label/selector (component: server). The pod is in turn listening on port 5000.
+    # No nodePort needed since you can't access it from outside the cluster anyway.
